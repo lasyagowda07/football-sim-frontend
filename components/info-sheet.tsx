@@ -24,94 +24,113 @@ export function InfoSheet({ children }: InfoSheetProps) {
         className="w-full sm:w-[420px] bg-slate-950 border-l border-slate-800 text-slate-100"
       >
         <SheetHeader>
-          <SheetTitle className="text-lg font-semibold">
+          <SheetTitle className="text-lg font-semibold text-slate-100">
             What is this platform doing?
           </SheetTitle>
-          <SheetDescription className="text-slate-400">
-            Quick tour of the backend pipeline this UI is driving.
+          <SheetDescription className="text-slate-300">
+            A quick explainer of the backend pipeline this UI is driving.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-5 text-sm leading-relaxed">
-          <p className="text-slate-300">
-            Behind this UI there&apos;s a cloud-style pipeline built with{" "}
-            <span className="font-medium text-emerald-300">FastAPI</span>,{" "}
-            <span className="font-medium text-emerald-300">SQLite</span>, and a
-            mock <span className="font-medium text-emerald-300">S3 layer</span>.
-            It uses 48k+ international football matches (1872–2025) to train a
-            match outcome model and run tournament simulations.
-          </p>
-
-          <div className="space-y-3">
-            <Step
-              number={1}
-              title="Ingest"
-              body="Admin clicks “Ingest Data”. The backend reads Kaggle CSVs from ./data and uploads them into a mock S3 bucket (raw/ folder)."
-            />
-            <Step
-              number={2}
-              title="Process"
-              body="“Process Data” cleans the raw files, normalizes team names, computes match_result & goal_diff, and writes processed/matches.csv and processed/teams.csv."
-            />
-            <Step
-              number={3}
-              title="Train"
-              body="“Train Model” trains a RandomForest classifier to predict match_result using team encodings + neutral flag. The model is stored in S3 (models/) and registered in the ModelRun table."
-            />
-            <Step
-              number={4}
-              title="Registry"
-              body="The model registry tracks every training run. One run is marked ACTIVE and is what the simulator uses for predictions."
-            />
-            <Step
-              number={5}
-              title="Simulate"
-              body="On the Simulator page, you pick teams and runs. The backend loads the ACTIVE model, simulates a knockout tournament many times, and returns win/final/semi probabilities per team."
-            />
-          </div>
-
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-xs text-slate-300">
-            <p className="font-semibold text-emerald-300 mb-1">
-              How to read the UI:
+        <div className="mt-6 space-y-5 text-sm leading-relaxed text-slate-200">
+          {/* High-level overview */}
+          <section className="space-y-2">
+            <p className="text-slate-200">
+              This app uses historical{" "}
+              <span className="font-medium text-emerald-300">
+                international football match data
+              </span>{" "}
+              (1872–2025) plus an ML model to simulate knockout tournaments.
+              The backend is structured like a small cloud data pipeline.
             </p>
-            <ul className="list-disc ml-4 space-y-1">
+          </section>
+
+          {/* Pipeline section */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Data & ML Pipeline
+            </h3>
+
+            <PipelineStep
+              label="Ingest"
+              description="Loads Kaggle CSVs from ./data and pushes them into mock S3 under raw/."
+            />
+            <PipelineStep
+              label="Process"
+              description="Cleans & normalizes data, computes match_result and goal_diff, writes processed/ tables."
+            />
+            <PipelineStep
+              label="Train"
+              description="Trains a RandomForest classifier to predict match outcomes. Model artifacts saved into S3."
+            />
+            <PipelineStep
+              label="Simulate"
+              description="Runs Monte Carlo knockout tournaments using the ACTIVE model in the registry."
+            />
+          </section>
+
+          {/* Cloud components */}
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Cloud-style components used
+            </h3>
+            <ul className="list-disc ml-5 space-y-1 text-slate-200">
               <li>
-                <span className="font-medium text-slate-100">Admin</span> tab:
-                step-by-step pipeline controls and model history.
+                <span className="font-medium text-emerald-300">Mock S3</span>{" "}
+                – local folder acting like S3 for raw, processed data and models.
               </li>
               <li>
-                <span className="font-medium text-slate-100">Simulator</span>{" "}
-                tab: main user-facing feature to run tournament simulations.
+                <span className="font-medium text-emerald-300">SQLite</span>{" "}
+                – small relational database storing ModelRun + SimulationRun.
               </li>
               <li>
-                All results and simulations are saved to the DB so you can
-                revisit them later.
+                <span className="font-medium text-emerald-300">FastAPI</span>{" "}
+                – backend API exposing admin & public endpoints.
+              </li>
+              <li>
+                <span className="font-medium text-emerald-300">S3 Abstraction</span>{" "}
+                – easily switched from local to real AWS S3 using ENV=cloud.
               </li>
             </ul>
-          </div>
+          </section>
+
+          {/* What happens when clicking simulate */}
+          <section className="rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-xs sm:text-sm text-slate-200">
+            <p className="font-semibold text-emerald-300 mb-2">
+              What happens when you click “Run Simulation”?
+            </p>
+            <ol className="list-decimal ml-5 space-y-1.5">
+              <li>The frontend sends your selected teams + n_runs to FastAPI.</li>
+              <li>The backend loads the <span className="font-medium">ACTIVE model</span> from S3.</li>
+              <li>The model predicts probabilities for each match.</li>
+              <li>
+                A full knockout bracket is simulated{" "}
+                <span className="font-medium">N times</span> using Monte Carlo.
+              </li>
+              <li>Team win/final/semi probabilities are computed and saved in DB.</li>
+            </ol>
+          </section>
         </div>
       </SheetContent>
     </Sheet>
   )
 }
 
-function Step({
-  number,
-  title,
-  body,
+function PipelineStep({
+  label,
+  description,
 }: {
-  number: number
-  title: string
-  body: string
+  label: string
+  description: string
 }) {
   return (
     <div className="flex gap-3">
-      <div className="mt-0.5 h-7 w-7 flex items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-400/40 text-xs font-semibold text-emerald-200">
-        {number}
+      <div className="mt-0.5 h-6 w-6 flex items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-400/40 text-[10px] font-semibold text-emerald-200">
+        {label[0]}
       </div>
       <div className="space-y-1">
-        <div className="font-medium text-slate-100">{title}</div>
-        <p className="text-slate-400 text-xs sm:text-sm">{body}</p>
+        <div className="text-xs font-semibold text-slate-100">{label}</div>
+        <p classnName="text-slate-300 text-xs sm:text-[13px]">{description}</p>
       </div>
     </div>
   )
