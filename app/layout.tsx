@@ -1,9 +1,9 @@
-// app/layout.tsx
 import "./globals.css"
 import { Inter } from "next/font/google"
 import Link from "next/link"
 import { InfoSheet } from "@/components/info-sheet"
 import { Button } from "@/components/ui/button"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -85,6 +85,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <Toaster />
       </body>
     </html>
   )
